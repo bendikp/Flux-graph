@@ -40,15 +40,18 @@ func (ks *Kustomization) HasDependsOn() bool {
 	return ks.Spec.DependsOn != nil
 }
 
+// Enclosing name in double quotes since the graph language wants them to be in quotes
 func (ks *Kustomization) Name() string {
-	return ks.Metadata.Name
+	return "\"" + ks.Metadata.Name + "\""
 }
 
 func (ks *Kustomization) GetDepndencies() []string {
 	dependencies := []string{}
 
 	for _, v := range ks.Spec.DependsOn {
-		dependencies = append(dependencies, v.Name)
+
+		// Enclosing name in double quotes since the graph language wants them to be in quotes
+		dependencies = append(dependencies, "\""+v.Name+"\"")
 	}
 	return dependencies
 }
