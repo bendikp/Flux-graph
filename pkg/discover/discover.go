@@ -1,7 +1,6 @@
 package discover
 
 import (
-	"bufio"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -43,18 +42,24 @@ func GetFiles(folder string) ([]string, error) {
 
 		if strings.HasSuffix(path, ".yaml") {
 
-			file, err := os.Open(path)
+			file, err := os.ReadFile(path)
 			if err != nil {
 				return err
 			}
-			defer file.Close()
-			scanner := bufio.NewScanner(file)
 
-			for scanner.Scan() {
-				if strings.Contains(scanner.Text(), "apiVersion: kustomize.toolkit.fluxcd.io") {
-					yamlFiles = append(yamlFiles, path)
+			stringFile := string(file)
+
+			splitFiles := strings.Split(stringFile, "---")
+
+			for _, content := range splitFiles {
+				if strings.Contains(content, "apiVersion: kustomize.toolkit.fluxcd.io") {
+					tmpFile, err := os.CreateTemp(os.TempDir(), "*.yaml")
+					if err != nil {
+						return err
+					}
+					tmpFile.WriteString(content)
+					yamlFiles = append(yamlFiles, tmpFile.Name())
 				}
-				break
 			}
 		}
 		return nil
