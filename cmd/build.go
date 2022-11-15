@@ -26,10 +26,14 @@ var buildCmd = &cobra.Command{
 	Long:  discoverDesc,
 	Run: func(cmd *cobra.Command, args []string) {
 		folder := viper.GetString("folder")
+		root := viper.GetString("root-folder")
+		helmReleases := viper.GetBool("show-helm-releases")
 
-		logging.Debug("folder: %s\n", folder)
+		logging.Debug("folder: %v\n", folder)
+		logging.Debug("root: %v\n", root)
+		logging.Debug("helmReleases: %v\n", helmReleases)
 
-		err := discover.Discover(folder)
+		err := discover.Discover(root, folder, helmReleases)
 		if err != nil {
 			panic(err)
 		}
@@ -46,7 +50,9 @@ var buildCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(buildCmd)
 
-	buildCmd.Flags().String("folder", "./", "Folder to find apps in (recursive)")
+	buildCmd.Flags().String("folder", "./", "Folder (relative to the root-folder) to find apps in (recursive)")
+	buildCmd.Flags().String("root-folder", "./", "The root of the flux folder")
+	buildCmd.Flags().Bool("show-helm-releases", false, "Shows in line helm release dependencies")
 
 	viper.BindPFlags(buildCmd.Flags())
 }

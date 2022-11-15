@@ -1,4 +1,4 @@
-package kustomization
+package helmRelease
 
 import (
 	"os"
@@ -6,11 +6,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Structs for handling the information that comes from the kustomization api's
-type Kustomization struct {
+// Structs for handling the information that comes from the helmRelease api's
+type HelmRelease struct {
 	Metadata Metadata `yaml:"metadata"`
 	Spec     Spec     `yaml:"spec"`
-	HRSlice  []string
+	Parent   string
 }
 
 type Metadata struct {
@@ -19,38 +19,37 @@ type Metadata struct {
 
 type Spec struct {
 	DependsOn []DependsOn `yaml:"dependsOn"`
-	Path      string      `yaml:"path"`
 }
 
 type DependsOn struct {
 	Name string `yaml:"name"`
 }
 
-var Kustomizations []Kustomization
+var HelmReleases []HelmRelease
 
 // Unmarshals a .yaml file into the app struct
-func (ks *Kustomization) GetValuesFromYamlFile(path string) error {
+func (hr *HelmRelease) GetValuesFromYamlFile(path string) error {
 	file, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
-	return yaml.Unmarshal(file, &ks)
+	return yaml.Unmarshal(file, &hr)
 }
 
-func (ks *Kustomization) HasDependsOn() bool {
-	return ks.Spec.DependsOn != nil
+func (hr *HelmRelease) HasDependsOn() bool {
+	return hr.Spec.DependsOn != nil
 }
 
 // Enclosing name in double quotes since the graph language wants them to be in quotes
-func (ks *Kustomization) Name() string {
-	return "\"" + ks.Metadata.Name + "\""
+func (hr *HelmRelease) Name() string {
+	return "\"" + hr.Metadata.Name + "\""
 }
 
-func (ks *Kustomization) GetDependencies() []string {
+func (hr *HelmRelease) GetDependencies() []string {
 	dependencies := []string{}
 
-	for _, v := range ks.Spec.DependsOn {
+	for _, v := range hr.Spec.DependsOn {
 
 		// Enclosing name in double quotes since the graph language wants them to be in quotes
 		dependencies = append(dependencies, "\""+v.Name+"\"")
