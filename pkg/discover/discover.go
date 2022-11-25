@@ -6,26 +6,44 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/distributed-technologies/flux-graph/pkg/helmRelease"
 	"github.com/distributed-technologies/flux-graph/pkg/kustomization"
-	"github.com/distributed-technologies/flux-graph/pkg/logging"
 )
 
 // Gets a list of *.yaml files that contains `apiVersion: argocd-discover/v1alpha1` string and generates an ArgoCD application resource that is written to stdout
-func Discover(folder string) error {
-	logging.Debug("folder: %v\n", folder)
-
-	yamlFiles, err := GetFiles(folder)
+func Discover(root string, folder string, showHelmReleases bool) error {
+	yamlFiles, err := GetFilesThatContains(filepath.Join(root, folder), "apiVersion: kustomize.toolkit.fluxcd.io")
 	if err != nil {
 		return err
 	}
 
 	for _, path := range yamlFiles {
+
 		var ks kustomization.Kustomization
 
 		ks.GetValuesFromYamlFile(path)
 
 		if ks.HasDependsOn() {
+			helmFiles, err := GetFilesThatContains(filepath.Join(root, ks.Spec.Path), "helm.toolkit.fluxcd.io")
+			if err != nil {
+				return err
+			}
+
+			for _, hrPath := range helmFiles {
+
+				var hr helmRelease.HelmRelease
+				hr.GetValuesFromYamlFile(hrPath)
+
+				if hr.HasDependsOn() && showHelmReleases {
+					hr.Parent = ks.Metadata.Name
+					ks.HRSlice = append(ks.HRSlice, hr.Metadata.Name)
+					helmRelease.HelmReleases = append(helmRelease.HelmReleases, hr)
+				}
+
+			}
+
 			kustomization.Kustomizations = append(kustomization.Kustomizations, ks)
+
 		}
 	}
 
@@ -33,7 +51,7 @@ func Discover(folder string) error {
 }
 
 // Looks up all files in the root, and checks if it contains the 'argocd-discover' apiVersion
-func GetFiles(folder string) ([]string, error) {
+func GetFilesThatContains(folder string, contains string) ([]string, error) {
 	yamlFiles := []string{}
 	err := filepath.Walk(folder, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -52,7 +70,7 @@ func GetFiles(folder string) ([]string, error) {
 			splitFiles := strings.Split(stringFile, "---")
 
 			for _, content := range splitFiles {
-				if strings.Contains(content, "apiVersion: kustomize.toolkit.fluxcd.io") {
+				if strings.Contains(content, contains) {
 					tmpFile, err := os.CreateTemp(os.TempDir(), "*.yaml")
 					if err != nil {
 						return err
@@ -68,6 +86,5 @@ func GetFiles(folder string) ([]string, error) {
 		return nil, err
 	}
 
-	logging.Debug("yamlFiles: %s", yamlFiles)
 	return yamlFiles, nil
 }
