@@ -22,6 +22,7 @@ Looks at kustomization files and builds a dependency graph is any exists
 
 | name | default | decription |
 |------|---------|------------|
-| --root | ./ | The root of the flux folder |
+| --root-folder | ./ | The root of the flux folder |
 | --folder | ./ | Folder (relative to the root-folder) to find apps in (recursive) |
+| --show-helm-releases | false | Makes subgraphs over helm releases dependencies (if any) |
 | --debug | false | Enables debug output |
