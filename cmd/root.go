@@ -12,8 +12,8 @@ var isDebug bool
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "flux-graph",
-	Short: "Templating multiple environments together",
-	Long: `Helm-overdrive is a tool that allows the templating og multiple yaml resources on top of each other.	`,
+	Short: "Builds a dependency graph from a flux repo",
+	Long: `Flux-graph is a tool that looks at kustomization files and builds a dependency graph is any exists.`,
 
 	// Run: func(cmd *cobra.Command, args []string) {
 	// },
@@ -40,7 +40,7 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	viper.SetEnvPrefix("HO") // Standing for 'helm-overdrive'
+	viper.SetEnvPrefix("FG") // Standing for 'flux-graph'
 	viper.AutomaticEnv()     // read in environment variables that match
 
 }
